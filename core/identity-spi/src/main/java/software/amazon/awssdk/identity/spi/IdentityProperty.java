@@ -15,6 +15,7 @@
 
 package software.amazon.awssdk.identity.spi;
 
+import java.util.Objects;
 import software.amazon.awssdk.annotations.Immutable;
 import software.amazon.awssdk.annotations.SdkPublicApi;
 import software.amazon.awssdk.annotations.ThreadSafe;
@@ -29,25 +30,28 @@ import software.amazon.awssdk.utils.Validate;
 @Immutable
 @ThreadSafe
 public final class IdentityProperty<T> {
-    private final Class<T> clazz;
+    private final String namespace;
     private final String name;
 
-    private IdentityProperty(Class<T> clazz, String name) {
-        Validate.paramNotNull(clazz, "clazz");
+    private IdentityProperty(String namespace, String name) {
+        Validate.paramNotBlank(namespace, "namespace");
         Validate.paramNotBlank(name, "name");
 
-        this.clazz = clazz;
+        this.namespace = namespace;
         this.name = name;
     }
 
-    public static <T> IdentityProperty<T> create(Class<T> clazz, String name) {
-        return new IdentityProperty<>(clazz, name);
+    /**
+     * Create a property of a certain type by specificying which class the property is being created in and name of property.
+     */
+    public static <T> IdentityProperty<T> create(Class<?> declaringClass, String name) {
+        return new IdentityProperty<>(declaringClass.getName(), name);
     }
 
     @Override
     public String toString() {
         return ToString.builder("IdentityProperty")
-                       .add("clazz", clazz)
+                       .add("namespace", namespace)
                        .add("name", name)
                        .build();
     }
@@ -63,16 +67,15 @@ public final class IdentityProperty<T> {
 
         IdentityProperty<?> that = (IdentityProperty<?>) o;
 
-        if (!clazz.equals(that.clazz)) {
-            return false;
-        }
-        return name.equals(that.name);
+        return Objects.equals(namespace, that.namespace) &&
+               Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        int result = clazz.hashCode();
-        result = 31 * result + name.hashCode();
-        return result;
+        int hashCode = 1;
+        hashCode = 31 * hashCode + Objects.hashCode(namespace);
+        hashCode = 31 * hashCode + Objects.hashCode(name);
+        return hashCode;
     }
 }
