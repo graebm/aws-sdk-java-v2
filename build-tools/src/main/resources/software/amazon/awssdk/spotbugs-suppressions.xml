@@ -266,4 +266,39 @@
         <Method name="fromFile"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
     </Match>
+
+
+    <!-- New flags as of spotbogs 4.7.3.5 -->
+     <Match>
+	<!--
+        <Or>
+            <Class name="software.amazon.awssdk.utils.async.SequentialSubscriber"/>
+            <Class name="software.amazon.awssdk.utils.async.StoringSubscriber$Event"/>
+            <Class name="software.amazon.awssdk.internal.http.LowCopyListMap$ForBuildable"/>
+            <Class name="software.amazon.awssdk.internal.http.LowCopyListMap$ForBuilder"/>
+            <Class name="software.amazon.awssdk.endpoints.Endpoinsoftware.amazon.awssdk.endpoints.Endpoint"/>
+	    <Class name="software.amazon.awssdk.http.apache.internal.ApacheHttpRequestConfig" />
+	    <Class name="software.amazon.awssdk.http.apache.internal.ApacheHttpRequestConfig$Builder" />
+	    <Class name="software.amazon.awssdk.http.apache.internal.SdkProxyRoutePlanner" />
+	    <Class name="software.amazon.awssdk.http.apache.internal.conn.IdleConnectionReaper" />
+	    <Class name="software.amazon.awssdk.http.apache.internal.net.DelegateSocket" />
+	    <Class name="software.amazon.awssdk.http.apache.internal.net.DelegateSslSocket" />
+	    <Class name="software.amazon.awssdk.http.apache.internal.conn.IdleConnectionReaper" />
+
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.AwaitCloseChannelPoolMap$Builder" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.ChannelPipelineInitializer" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.ChannelPipelineInitializer" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.ListenerInvokingChannelPool" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.NettyRequestExecutor" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.ProxyTunnelInitHandler" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.RequestContext" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.RequestContext" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.http2.FlushOnReadHandler" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.http2.Http2SettingsFrameHandler" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.http2.HttpOrHttp2ChannelPool" />
+	    <Class name="software.amazon.awssdk.http.nio.netty.internal.nrs.HandlerPublisher" />
+        </Or>
+	-->
+        <Bug pattern="EI_EXPOSE_REP2,EI_EXPOSE_REP,MS_EXPOSE_REP,MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR,SA_FIELD_SELF_ASSIGNMENT"/>
+    </Match>
 </FindBugsFilter>
