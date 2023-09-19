@@ -42,10 +42,13 @@ public final class SignerProperty<T> {
     }
 
     /**
-     * Create a property of a certain type by specificying which class the property is being created in and name of property.
+     * Create an instance of a property.
+     *
+     * @param namespace the class *where* the property is being defined
+     * @param name the name for the propety
      */
-    public static <T> SignerProperty<T> create(Class<?> declaringClass, String name) {
-        return new SignerProperty<>(declaringClass.getName(), name);
+    public static <T> SignerProperty<T> create(Class<?> namespace, String name) {
+        return new SignerProperty<>(namespace.getName(), name);
     }
 
     @Override

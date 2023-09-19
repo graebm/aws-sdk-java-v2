@@ -67,7 +67,7 @@ public class SigningStageTest {
 
     private static final int TEST_TIME_OFFSET = 17;
     private static final SignerProperty<String> SIGNER_PROPERTY =
-        SignerProperty.create(SigningStageTest.class, "SigningStageTest.key");
+        SignerProperty.create(SigningStageTest.class, "key");
 
     @Mock
     private Identity identity;
