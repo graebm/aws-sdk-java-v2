@@ -42,8 +42,9 @@ public final class IdentityProperty<T> {
     }
 
     /**
-     * Create an instance of a property.
+     * Create a property.
      *
+     * @param <T> the type of the property.
      * @param namespace the class *where* the property is being defined
      * @param name the name for the propety
      */
