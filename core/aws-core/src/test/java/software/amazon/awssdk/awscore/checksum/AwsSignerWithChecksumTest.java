@@ -44,7 +44,8 @@ public class AwsSignerWithChecksumTest {
         SdkHttpFullRequest.Builder request = generateBasicRequest("abc");
         ExecutionAttributes executionAttributes = getExecutionAttributes(SHA_256_HEADER);
         SdkHttpFullRequest signed = signer.sign(request.build(), executionAttributes);
-        final Optional<String> checksumHeader = signed.firstMatchingHeader("header-sha256");
+        // though the headerName is given, the signer must use the 'x-amz-checksum-<algorithm>' header
+        Optional<String> checksumHeader = signed.firstMatchingHeader("x-amz-checksum-sha256");
         assertThat(checksumHeader).hasValue("ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=");
     }
 
