@@ -158,6 +158,9 @@ public class SdkExecutionAttribute {
         CRC32C, Algorithm.CRC32C
     );
 
+    protected SdkExecutionAttribute() {
+    }
+
     private static <T extends Identity> ChecksumSpecs signerChecksumReadMapping(SelectedAuthScheme<T> authScheme) {
         if (authScheme == null) {
             return null;
@@ -214,8 +217,5 @@ public class SdkExecutionAttribute {
         public CompletableFuture<AsyncSignedRequest> signAsync(AsyncSignRequest<? extends UnsetIdentity> request) {
             return CompletableFutureUtils.failedFuture(new IllegalStateException("A signer was not configured."));
         }
-    }
-
-    protected SdkExecutionAttribute() {
     }
 }
