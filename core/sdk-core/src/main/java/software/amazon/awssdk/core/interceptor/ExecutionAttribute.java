@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import software.amazon.awssdk.annotations.SdkPublicApi;
 import software.amazon.awssdk.utils.Validate;
 
@@ -85,6 +86,25 @@ public final class ExecutionAttribute<T> {
                                                                       @SuppressWarnings("unused") Class<T> attributeType,
                                                                       ExecutionAttribute<U> realAttribute) {
         return new DerivedAttributeBuilder<>(name, realAttribute);
+    }
+
+    /**
+     * Create an execution attribute whose value is derived from another attribute.
+     *
+     * <p>Whenever this value is read, its value is read from a different "real" attribute, and whenever this value is written its
+     * value is written to the "real" attribute, instead.
+     *
+     * <p>This is useful when new attributes are created to replace old attributes, but for backwards-compatibility those old
+     * attributes still need to be made available.
+     *
+     * @param name The name of the attribute to create
+     * @param attributeType The type of the attribute being created
+     * @param realAttributeSupplier The supplier for a "real" attribute from which this attribute is derived
+     */
+    public static <T, U> DerivedAttributeBuilder<T, U> derivedBuilder(String name,
+                                                               @SuppressWarnings("unused") Class<T> attributeType,
+                                                               Supplier<ExecutionAttribute<U>> realAttributeSupplier) {
+        return new DerivedAttributeBuilder<>(name, realAttributeSupplier.get());
     }
 
     private void ensureUnique() {

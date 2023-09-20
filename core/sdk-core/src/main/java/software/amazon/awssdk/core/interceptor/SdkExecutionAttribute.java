@@ -127,7 +127,7 @@ public class SdkExecutionAttribute {
     public static final ExecutionAttribute<ChecksumSpecs> RESOLVED_CHECKSUM_SPECS =
         ExecutionAttribute.derivedBuilder("ResolvedChecksumSpecs",
                                           ChecksumSpecs.class,
-                                          SdkInternalExecutionAttribute.SELECTED_AUTH_SCHEME)
+                                          () -> SdkInternalExecutionAttribute.SELECTED_AUTH_SCHEME)
                           .readMapping(SdkExecutionAttribute::signerChecksumReadMapping)
                           .writeMapping(SdkExecutionAttribute::signerChecksumWriteMapping)
                           .build();
