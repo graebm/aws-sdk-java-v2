@@ -85,7 +85,7 @@ public final class ExecutionAttribute<T> {
     public static <T, U> DerivedAttributeBuilder<T, U> derivedBuilder(String name,
                                                                       @SuppressWarnings("unused") Class<T> attributeType,
                                                                       ExecutionAttribute<U> realAttribute) {
-        return new DerivedAttributeBuilder<>(name, realAttribute);
+        return new DerivedAttributeBuilder<>(name, () -> realAttribute);
     }
 
     /**
@@ -104,7 +104,7 @@ public final class ExecutionAttribute<T> {
     public static <T, U> DerivedAttributeBuilder<T, U> derivedBuilder(String name,
                                                                @SuppressWarnings("unused") Class<T> attributeType,
                                                                Supplier<ExecutionAttribute<U>> realAttributeSupplier) {
-        return new DerivedAttributeBuilder<>(name, realAttributeSupplier.get());
+        return new DerivedAttributeBuilder<>(name, realAttributeSupplier);
     }
 
     private void ensureUnique() {
@@ -163,13 +163,13 @@ public final class ExecutionAttribute<T> {
 
     public static final class DerivedAttributeBuilder<T, U> {
         private final String name;
-        private final ExecutionAttribute<U> realAttribute;
+        private final Supplier<ExecutionAttribute<U>> realAttributeSupplier;
         private Function<U, T> readMapping;
         private BiFunction<U, T, U> writeMapping;
 
-        private DerivedAttributeBuilder(String name, ExecutionAttribute<U> realAttribute) {
+        private DerivedAttributeBuilder(String name, Supplier<ExecutionAttribute<U>> realAttributeSupplier) {
             this.name = name;
-            this.realAttribute = realAttribute;
+            this.realAttributeSupplier = realAttributeSupplier;
         }
 
         /**
@@ -243,12 +243,12 @@ public final class ExecutionAttribute<T> {
      * attributes map.
      */
     private static final class DerivationValueStorage<T, U> implements ValueStorage<T> {
-        private final ExecutionAttribute<U> realAttribute;
+        private final Supplier<ExecutionAttribute<U>> realAttributeSupplier;
         private final Function<U, T> readMapping;
         private final BiFunction<U, T, U> writeMapping;
 
         private DerivationValueStorage(DerivedAttributeBuilder<T, U> builder) {
-            this.realAttribute = Validate.paramNotNull(builder.realAttribute, "realAttribute");
+            this.realAttributeSupplier = Validate.paramNotNull(builder.realAttributeSupplier, "realAttributeSupplier");
             this.readMapping = Validate.paramNotNull(builder.readMapping, "readMapping");
             this.writeMapping = Validate.paramNotNull(builder.writeMapping, "writeMapping");
         }
@@ -256,18 +256,18 @@ public final class ExecutionAttribute<T> {
         @SuppressWarnings("unchecked") // Safe because of the implementation of set
         @Override
         public T get(Map<ExecutionAttribute<?>, Object> attributes) {
-            return readMapping.apply((U) attributes.get(realAttribute));
+            return readMapping.apply((U) attributes.get(realAttributeSupplier.get()));
         }
 
         @SuppressWarnings("unchecked") // Safe because of the implementation of set
         @Override
         public void set(Map<ExecutionAttribute<?>, Object> attributes, T value) {
-            attributes.compute(realAttribute, (k, real) -> writeMapping.apply((U) real, value));
+            attributes.compute(realAttributeSupplier.get(), (k, real) -> writeMapping.apply((U) real, value));
         }
 
         @Override
         public void setIfAbsent(Map<ExecutionAttribute<?>, Object> attributes, T value) {
-            attributes.computeIfAbsent(realAttribute, k -> writeMapping.apply(null, value));
+            attributes.computeIfAbsent(realAttributeSupplier.get(), k -> writeMapping.apply(null, value));
         }
     }
 }
