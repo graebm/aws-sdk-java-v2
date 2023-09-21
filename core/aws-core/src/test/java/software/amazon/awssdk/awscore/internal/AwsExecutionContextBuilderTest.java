@@ -185,7 +185,7 @@ public class AwsExecutionContextBuilderTest {
         ChecksumSpecs checksumSpecs2 = HttpChecksumUtils.checksumSpecWithRequestAlgorithm(executionAttributes2).get();
         ChecksumSpecs checksumSpecs3 = HttpChecksumUtils.checksumSpecWithRequestAlgorithm(executionAttributes2).get();
 
-        assertThat(checksumSpecs1).isNotEqualTo(checksumSpecs2);
+        assertThat(checksumSpecs1).isEqualTo(checksumSpecs2);
         assertThat(checksumSpecs2).isEqualTo(checksumSpecs3);
     }
 

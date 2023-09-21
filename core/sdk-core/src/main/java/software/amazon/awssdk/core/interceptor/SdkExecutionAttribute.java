@@ -119,7 +119,7 @@ public class SdkExecutionAttribute {
      * The checksums specs used to control checksum behavior in the signer.
      *
      * @deprecated This is a protected class that is internal to the SDK, so you shouldn't be using it. If you are using it
-     * from execution interceptors, you should instead be overriding the normalize-path setting via the {@code
+     * from execution interceptors, you should instead be overriding the resolved-checksum-specs setting via the {@code
      * AuthSchemeProvider} that is configured on the SDK client builder. If you're using it to call the SDK's signers, you
      * should migrate to a subtype of {@code HttpSigner}.
      */
