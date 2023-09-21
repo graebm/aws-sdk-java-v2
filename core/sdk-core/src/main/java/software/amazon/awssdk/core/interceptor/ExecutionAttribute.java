@@ -85,26 +85,25 @@ public final class ExecutionAttribute<T> {
     public static <T, U> DerivedAttributeBuilder<T, U> derivedBuilder(String name,
                                                                       @SuppressWarnings("unused") Class<T> attributeType,
                                                                       ExecutionAttribute<U> realAttribute) {
-        return new DerivedAttributeBuilder<>(name, () -> realAttribute);
+        return new DerivedAttributeBuilder<>(name, realAttribute);
     }
 
     /**
-     * Create an execution attribute whose value is derived from another attribute.
+     * Create an execution attribute whose value get mapped to another execution attribute.
      *
-     * <p>Whenever this value is read, its value is read from a different "real" attribute, and whenever this value is written its
-     * value is written to the "real" attribute, instead.
+     * <p>Whenever this value is read, its value is read from the given attribute, but whenever this value is written its
+     * value is written to the given attribute AND the mapped attribute.
      *
-     * <p>This is useful when new attributes are created to replace old attributes, but for backwards-compatibility those old
-     * attributes still need to be made available.
+     * <p>This is useful when you have some attribute that depends on the value of another.
      *
      * @param name The name of the attribute to create
      * @param attributeType The type of the attribute being created
-     * @param realAttributeSupplier The supplier for a "real" attribute from which this attribute is derived
+     * @param mappedAttributeSupplier The supplier for the mapped attribute which is mapped from this attribute
      */
-    public static <T, U> DerivedAttributeBuilder<T, U> derivedBuilder(String name,
-                                                               @SuppressWarnings("unused") Class<T> attributeType,
-                                                               Supplier<ExecutionAttribute<U>> realAttributeSupplier) {
-        return new DerivedAttributeBuilder<>(name, realAttributeSupplier);
+    public static <T, U> MappedAttributeBuilder<T, U> mappedBuilder(String name,
+                                                                      @SuppressWarnings("unused") Class<T> attributeType,
+                                                                      Supplier<ExecutionAttribute<U>> mappedAttributeSupplier) {
+        return new MappedAttributeBuilder<>(name, mappedAttributeSupplier);
     }
 
     private void ensureUnique() {
@@ -163,13 +162,13 @@ public final class ExecutionAttribute<T> {
 
     public static final class DerivedAttributeBuilder<T, U> {
         private final String name;
-        private final Supplier<ExecutionAttribute<U>> realAttributeSupplier;
+        private final ExecutionAttribute<U> realAttribute;
         private Function<U, T> readMapping;
         private BiFunction<U, T, U> writeMapping;
 
-        private DerivedAttributeBuilder(String name, Supplier<ExecutionAttribute<U>> realAttributeSupplier) {
+        private DerivedAttributeBuilder(String name, ExecutionAttribute<U> realAttribute) {
             this.name = name;
-            this.realAttributeSupplier = realAttributeSupplier;
+            this.realAttribute = realAttribute;
         }
 
         /**
@@ -243,12 +242,12 @@ public final class ExecutionAttribute<T> {
      * attributes map.
      */
     private static final class DerivationValueStorage<T, U> implements ValueStorage<T> {
-        private final Supplier<ExecutionAttribute<U>> realAttributeSupplier;
+        private final ExecutionAttribute<U> realAttribute;
         private final Function<U, T> readMapping;
         private final BiFunction<U, T, U> writeMapping;
 
         private DerivationValueStorage(DerivedAttributeBuilder<T, U> builder) {
-            this.realAttributeSupplier = Validate.paramNotNull(builder.realAttributeSupplier, "realAttributeSupplier");
+            this.realAttribute = Validate.paramNotNull(builder.realAttribute, "realAttribute");
             this.readMapping = Validate.paramNotNull(builder.readMapping, "readMapping");
             this.writeMapping = Validate.paramNotNull(builder.writeMapping, "writeMapping");
         }
@@ -256,18 +255,78 @@ public final class ExecutionAttribute<T> {
         @SuppressWarnings("unchecked") // Safe because of the implementation of set
         @Override
         public T get(Map<ExecutionAttribute<?>, Object> attributes) {
-            return readMapping.apply((U) attributes.get(realAttributeSupplier.get()));
+            return readMapping.apply((U) attributes.get(realAttribute));
         }
 
         @SuppressWarnings("unchecked") // Safe because of the implementation of set
         @Override
         public void set(Map<ExecutionAttribute<?>, Object> attributes, T value) {
-            attributes.compute(realAttributeSupplier.get(), (k, real) -> writeMapping.apply((U) real, value));
+            attributes.compute(realAttribute, (k, real) -> writeMapping.apply((U) real, value));
         }
 
         @Override
         public void setIfAbsent(Map<ExecutionAttribute<?>, Object> attributes, T value) {
-            attributes.computeIfAbsent(realAttributeSupplier.get(), k -> writeMapping.apply(null, value));
+            attributes.computeIfAbsent(realAttribute, k -> writeMapping.apply(null, value));
+        }
+    }
+
+    private static final class MappingValueStorage<T, U> implements ValueStorage<T> {
+        private final ExecutionAttribute<T> attribute;
+        private final Supplier<ExecutionAttribute<U>> mappedAttributeSupplier;
+        private final BiFunction<U, T, U> mappingFunction;
+
+        private MappingValueStorage(MappedAttributeBuilder<T, U> mappedAttributeBuilder) {
+            this.attribute =
+                Validate.paramNotNull(mappedAttributeBuilder.attribute, "attribute");
+            this.mappedAttributeSupplier =
+                Validate.paramNotNull(mappedAttributeBuilder.mappedAttributeSupplier, "mappedAttributeSupplier");
+            this.mappingFunction = Validate.paramNotNull(mappedAttributeBuilder.mappingFunction, "mappingFunction");
+        }
+
+        @SuppressWarnings("unchecked") // Safe because of the implementation of set()
+        @Override
+        public T get(Map<ExecutionAttribute<?>, Object> attributes) {
+            return (T) attributes.get(attribute);
+        }
+
+        @SuppressWarnings("unchecked") // Safe because of the implementation of set
+        @Override
+        public void set(Map<ExecutionAttribute<?>, Object> attributes, T value) {
+            attributes.put(attribute, value);
+            attributes.compute(mappedAttributeSupplier.get(), (k, attr) -> mappingFunction.apply((U) attr, value));
+        }
+
+        @Override
+        public void setIfAbsent(Map<ExecutionAttribute<?>, Object> attributes, T value) {
+            attributes.putIfAbsent(attribute, value);
+            attributes.computeIfAbsent(mappedAttributeSupplier.get(), k -> mappingFunction.apply(null, value));
+        }
+    }
+
+    public static final class MappedAttributeBuilder<T, U> {
+        private final String name;
+        private final ExecutionAttribute<T> attribute;
+        private final Supplier<ExecutionAttribute<U>> mappedAttributeSupplier;
+        private BiFunction<U, T, U> mappingFunction;
+
+        public MappedAttributeBuilder(String name, Supplier<ExecutionAttribute<U>> mappedAttributeSupplier) {
+            this.name = name;
+            this.attribute = new ExecutionAttribute<>(name);
+            this.mappedAttributeSupplier = mappedAttributeSupplier;
+        }
+
+        /**
+         * Set the mapping function for the mapped attribute. The provided function accepts the value of the "backing"
+         * attribute, and returns the value to set to the mapped attribute.
+         */
+        public MappedAttributeBuilder<T, U> mappingFunction(BiFunction<U, T, U> mappingFunction) {
+            this.mappingFunction = mappingFunction;
+            return this;
+        }
+
+        public ExecutionAttribute<T> build() {
+            NAME_HISTORY.remove(name);
+            return new ExecutionAttribute<>(name, new MappingValueStorage<>(this));
         }
     }
 }

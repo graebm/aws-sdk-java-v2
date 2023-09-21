@@ -21,7 +21,6 @@ import static software.amazon.awssdk.checksums.DefaultChecksumAlgorithm.SHA1;
 import static software.amazon.awssdk.checksums.DefaultChecksumAlgorithm.SHA256;
 
 import java.net.URI;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import software.amazon.awssdk.annotations.SdkPublicApi;
@@ -125,11 +124,10 @@ public class SdkExecutionAttribute {
      */
     @Deprecated
     public static final ExecutionAttribute<ChecksumSpecs> RESOLVED_CHECKSUM_SPECS =
-        ExecutionAttribute.derivedBuilder("ResolvedChecksumSpecs",
-                                          ChecksumSpecs.class,
-                                          () -> SdkInternalExecutionAttribute.SELECTED_AUTH_SCHEME)
-                          .readMapping(SdkExecutionAttribute::signerChecksumReadMapping)
-                          .writeMapping(SdkExecutionAttribute::signerChecksumWriteMapping)
+        ExecutionAttribute.mappedBuilder("ResolvedChecksumSpecs",
+                                         ChecksumSpecs.class,
+                                         () -> SdkInternalExecutionAttribute.SELECTED_AUTH_SCHEME)
+                          .mappingFunction(SdkExecutionAttribute::signerChecksumMapping)
                           .build();
 
     /**
@@ -151,34 +149,10 @@ public class SdkExecutionAttribute {
         Algorithm.CRC32C, CRC32C
     );
 
-    private static final ImmutableMap<ChecksumAlgorithm, Algorithm> ALGORITHM_MAP = ImmutableMap.of(
-        SHA256, Algorithm.SHA256,
-        SHA1, Algorithm.SHA1,
-        CRC32, Algorithm.CRC32,
-        CRC32C, Algorithm.CRC32C
-    );
-
     protected SdkExecutionAttribute() {
     }
 
-    private static <T extends Identity> ChecksumSpecs signerChecksumReadMapping(SelectedAuthScheme<T> authScheme) {
-        if (authScheme == null) {
-            return null;
-        }
-        ChecksumAlgorithm checksumAlgorithm =
-            authScheme.authSchemeOption().signerProperty(AwsV4FamilyHttpSigner.CHECKSUM_ALGORITHM);
-
-        if (checksumAlgorithm == null) {
-            return null;
-        }
-
-        return ChecksumSpecs.builder()
-                            .headerName("x-amz-checksum-" + checksumAlgorithm.algorithmId().toLowerCase(Locale.US))
-                            .algorithm(ALGORITHM_MAP.getOrDefault(checksumAlgorithm, null))
-                            .build();
-    }
-
-    private static <T extends Identity> SelectedAuthScheme<?> signerChecksumWriteMapping(SelectedAuthScheme<T> authScheme,
+    private static <T extends Identity> SelectedAuthScheme<?> signerChecksumMapping(SelectedAuthScheme<T> authScheme,
                                                                                          ChecksumSpecs checksumSpecs) {
         ChecksumAlgorithm checksumAlgorithm =
             checksumSpecs == null ? null

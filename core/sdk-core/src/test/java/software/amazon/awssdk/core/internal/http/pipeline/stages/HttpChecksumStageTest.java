@@ -45,7 +45,6 @@ import utils.ValidSdkObjects;
 @RunWith(MockitoJUnitRunner.class)
 public class HttpChecksumStageTest {
     private static final String CHECKSUM_SPECS_HEADER = "ChecksumHeader";
-    private static final String SHA256_CHECKSUM_HEADER = "x-amz-checksum-sha256";
     private static final RequestBody REQUEST_BODY = RequestBody.fromString("TestBody");
     private static final AsyncRequestBody ASYNC_REQUEST_BODY = AsyncRequestBody.fromString("TestBody");
     private final HttpChecksumStage syncStage = new HttpChecksumStage(ClientType.SYNC);
@@ -101,42 +100,41 @@ public class HttpChecksumStageTest {
                                                      + "calculated for non-blocking content.");
     }
 
-    // TODO(sra-identity-and-auth): Remove these tests once the HttpChecksumStage path is updated to not do chunk-encoding itself
-    // @Test
-    // public void sync_flexibleChecksumInTrailerRequired_addsFlexibleChecksumInTrailer_doesNotAddMd5ChecksumAndFlexibleChecksumInHeader() throws Exception {
-    //     SdkHttpFullRequest.Builder requestBuilder = createHttpRequestBuilder();
-    //     boolean isStreaming = true;
-    //     RequestExecutionContext ctx = syncFlexibleChecksumRequiredRequestContext(isStreaming);
-    //
-    //     syncStage.execute(requestBuilder, ctx);
-    //
-    //     assertThat(requestBuilder.headers().get(HEADER_FOR_TRAILER_REFERENCE)).containsExactly(MD5_CHECKSUM_HEADER);
-    //     assertThat(requestBuilder.headers().get("Content-encoding")).containsExactly("aws-chunked");
-    //     assertThat(requestBuilder.headers().get("x-amz-content-sha256")).containsExactly("STREAMING-UNSIGNED-PAYLOAD-TRAILER");
-    //     assertThat(requestBuilder.headers().get("x-amz-decoded-content-length")).containsExactly("8");
-    //     assertThat(requestBuilder.headers().get(CONTENT_LENGTH)).containsExactly("79");
-    //
-    //     assertThat(requestBuilder.firstMatchingHeader(CONTENT_MD5)).isEmpty();
-    //     assertThat(requestBuilder.firstMatchingHeader(CHECKSUM_SPECS_HEADER)).isEmpty();
-    // }
-    //
-    // @Test
-    // public void async_flexibleChecksumInTrailerRequired_addsFlexibleChecksumInTrailer_doesNotAddMd5ChecksumAndFlexibleChecksumInHeader() throws Exception {
-    //     SdkHttpFullRequest.Builder requestBuilder = createHttpRequestBuilder();
-    //     boolean isStreaming = true;
-    //     RequestExecutionContext ctx = asyncFlexibleChecksumRequiredRequestContext(isStreaming);
-    //
-    //     asyncStage.execute(requestBuilder, ctx);
-    //
-    //     assertThat(requestBuilder.headers().get(HEADER_FOR_TRAILER_REFERENCE)).containsExactly(MD5_CHECKSUM_HEADER);
-    //     assertThat(requestBuilder.headers().get("Content-encoding")).containsExactly("aws-chunked");
-    //     assertThat(requestBuilder.headers().get("x-amz-content-sha256")).containsExactly("STREAMING-UNSIGNED-PAYLOAD-TRAILER");
-    //     assertThat(requestBuilder.headers().get("x-amz-decoded-content-length")).containsExactly("8");
-    //     assertThat(requestBuilder.headers().get(CONTENT_LENGTH)).containsExactly("79");
-    //
-    //     assertThat(requestBuilder.firstMatchingHeader(CONTENT_MD5)).isEmpty();
-    //     assertThat(requestBuilder.firstMatchingHeader(CHECKSUM_SPECS_HEADER)).isEmpty();
-    // }
+    @Test
+    public void sync_flexibleChecksumInTrailerRequired_addsFlexibleChecksumInTrailer_doesNotAddMd5ChecksumAndFlexibleChecksumInHeader() throws Exception {
+        SdkHttpFullRequest.Builder requestBuilder = createHttpRequestBuilder();
+        boolean isStreaming = true;
+        RequestExecutionContext ctx = syncFlexibleChecksumRequiredRequestContext(isStreaming);
+
+        syncStage.execute(requestBuilder, ctx);
+
+        assertThat(requestBuilder.headers().get(HEADER_FOR_TRAILER_REFERENCE)).containsExactly(CHECKSUM_SPECS_HEADER);
+        assertThat(requestBuilder.headers().get("Content-encoding")).containsExactly("aws-chunked");
+        assertThat(requestBuilder.headers().get("x-amz-content-sha256")).containsExactly("STREAMING-UNSIGNED-PAYLOAD-TRAILER");
+        assertThat(requestBuilder.headers().get("x-amz-decoded-content-length")).containsExactly("8");
+        assertThat(requestBuilder.headers().get(CONTENT_LENGTH)).containsExactly("79");
+
+        assertThat(requestBuilder.firstMatchingHeader(CONTENT_MD5)).isEmpty();
+        assertThat(requestBuilder.firstMatchingHeader(CHECKSUM_SPECS_HEADER)).isEmpty();
+    }
+
+    @Test
+    public void async_flexibleChecksumInTrailerRequired_addsFlexibleChecksumInTrailer_doesNotAddMd5ChecksumAndFlexibleChecksumInHeader() throws Exception {
+        SdkHttpFullRequest.Builder requestBuilder = createHttpRequestBuilder();
+        boolean isStreaming = true;
+        RequestExecutionContext ctx = asyncFlexibleChecksumRequiredRequestContext(isStreaming);
+
+        asyncStage.execute(requestBuilder, ctx);
+
+        assertThat(requestBuilder.headers().get(HEADER_FOR_TRAILER_REFERENCE)).containsExactly(CHECKSUM_SPECS_HEADER);
+        assertThat(requestBuilder.headers().get("Content-encoding")).containsExactly("aws-chunked");
+        assertThat(requestBuilder.headers().get("x-amz-content-sha256")).containsExactly("STREAMING-UNSIGNED-PAYLOAD-TRAILER");
+        assertThat(requestBuilder.headers().get("x-amz-decoded-content-length")).containsExactly("8");
+        assertThat(requestBuilder.headers().get(CONTENT_LENGTH)).containsExactly("79");
+
+        assertThat(requestBuilder.firstMatchingHeader(CONTENT_MD5)).isEmpty();
+        assertThat(requestBuilder.firstMatchingHeader(CHECKSUM_SPECS_HEADER)).isEmpty();
+    }
 
     @Test
     public void sync_flexibleChecksumInHeaderRequired_addsFlexibleChecksumInHeader_doesNotAddMd5ChecksumAndFlexibleChecksumInTrailer() throws Exception {
@@ -146,7 +144,7 @@ public class HttpChecksumStageTest {
 
         syncStage.execute(requestBuilder, ctx);
 
-        assertThat(requestBuilder.headers().get(SHA256_CHECKSUM_HEADER)).containsExactly("/T5YuTxNWthvWXg+TJMwl60XKcAnLMrrOZe/jA9Y+eI=");
+        assertThat(requestBuilder.headers().get(CHECKSUM_SPECS_HEADER)).containsExactly("/T5YuTxNWthvWXg+TJMwl60XKcAnLMrrOZe/jA9Y+eI=");
 
         assertThat(requestBuilder.firstMatchingHeader(HEADER_FOR_TRAILER_REFERENCE)).isEmpty();
         assertThat(requestBuilder.firstMatchingHeader("Content-encoding")).isEmpty();
@@ -164,7 +162,7 @@ public class HttpChecksumStageTest {
 
         asyncStage.execute(requestBuilder, ctx);
 
-        assertThat(requestBuilder.headers().get(SHA256_CHECKSUM_HEADER)).containsExactly("/T5YuTxNWthvWXg+TJMwl60XKcAnLMrrOZe/jA9Y+eI=");
+        assertThat(requestBuilder.headers().get(CHECKSUM_SPECS_HEADER)).containsExactly("/T5YuTxNWthvWXg+TJMwl60XKcAnLMrrOZe/jA9Y+eI=");
 
         assertThat(requestBuilder.firstMatchingHeader(HEADER_FOR_TRAILER_REFERENCE)).isEmpty();
         assertThat(requestBuilder.firstMatchingHeader("Content-encoding")).isEmpty();
