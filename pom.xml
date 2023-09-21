@@ -131,7 +131,7 @@
         <netty-open-ssl-version>2.0.61.Final</netty-open-ssl-version>
         <dynamodb-local.version>1.16.0</dynamodb-local.version>
         <sqllite.version>1.0.392</sqllite.version>
-        <blockhound.version>1.0.6.RELEASE</blockhound.version>
+        <blockhound.version>1.0.8.RELEASE</blockhound.version>
         <jetty.version>9.4.45.v20220203</jetty.version>
 
         <!-- build plugin dependencies-->
